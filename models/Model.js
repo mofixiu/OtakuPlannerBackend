@@ -40,7 +40,41 @@ class Model {
         }
     }
 
+    // Add this helper method to format dates for MySQL
+    static formatDateForMySQL(date) {
+        if (!date) return null;
+        
+        // Convert to MySQL datetime format: YYYY-MM-DD HH:MM:SS
+        if (date instanceof Date) {
+            return date.toISOString().slice(0, 19).replace('T', ' ');
+        }
+        
+        // If it's already a string, try to parse and format it
+        if (typeof date === 'string') {
+            const parsedDate = new Date(date);
+            return parsedDate.toISOString().slice(0, 19).replace('T', ' ');
+        }
+        
+        return date;
+    }
+
     async insert() {
+        const now = new Date();
+        const mysqlDateFormat = this.constructor.formatDateForMySQL(now);
+        
+        // Ensure timestamps are in MySQL format
+        if (!this.created_at) {
+            this.created_at = mysqlDateFormat;
+        } else {
+            this.created_at = this.constructor.formatDateForMySQL(this.created_at);
+        }
+        
+        if (!this.updated_at) {
+            this.updated_at = mysqlDateFormat;
+        } else {
+            this.updated_at = this.constructor.formatDateForMySQL(this.updated_at);
+        }
+        
         const fields = Object.keys(this);
         const values = Object.values(this);
         const placeholders = '?'.repeat(values.length).split('').join(', ')
@@ -52,9 +86,8 @@ class Model {
 
     // SINGLE update method with proper timestamp handling
     async update() {
-        // Set updated_at timestamp
-        const now = new Date().toISOString();
-        this.updated_at = now;
+        const now = new Date();
+        this.updated_at = this.constructor.formatDateForMySQL(now);
         
         // Prepare the update
         const obj = { ...this }; // Create a copy
@@ -75,18 +108,17 @@ class Model {
     }
 
     async save() {
-        const now = new Date().toISOString();
+        const now = new Date();
+        const mysqlDateFormat = this.constructor.formatDateForMySQL(now);
         
-        // Set created_at if it's a new record (no ID)
-        if (!this.id) {
-            this.created_at = now;
+        if (this.id) {
+            this.updated_at = mysqlDateFormat;
+            return await this.update();
+        } else {
+            this.created_at = mysqlDateFormat;
+            this.updated_at = mysqlDateFormat;
+            return await this.insert();
         }
-        
-        // Always set updated_at
-        this.updated_at = now;
-        
-        // Call insert for new records
-        return await this.insert();
     }
 
     static async fetch() {

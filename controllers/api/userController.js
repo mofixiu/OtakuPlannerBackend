@@ -337,8 +337,8 @@ const storeUser = async (req, res) => {
     const user = User.fill({
       username,
       email,
-      password: hashedPassword, // Use the hashed password
-      fullName,
+      password: hashedPassword,
+      full_name: fullName, // Change from 'fullName' to 'full_name' if that's your column name
     });
 
     if (req.files?.profileImage) {

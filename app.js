@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 const { resolve } = require('path');
 const apiAdminRoute = require('./routes/apiAdminRoute');
 const adminRoute = require('./routes/apiAdminRoute');
