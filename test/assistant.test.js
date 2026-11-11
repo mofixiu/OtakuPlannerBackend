@@ -1,3 +1,6 @@
+// Tests sign their own tokens with this secret.
+process.env.JWT_SECRET = 'test-secret';
+
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const jwt = require('jsonwebtoken');
@@ -190,7 +193,7 @@ test('each user is limited per hour, separately', () => {
 });
 
 test('only requests with a valid login token reach the assistant', () => {
-    const secret = process.env.JWT_SECRET || 'your-secret-key';
+    const secret = process.env.JWT_SECRET;
     const good = jwt.sign({ userId: 7, username: 'mofi' }, secret);
     const bad = jwt.sign({ userId: 7 }, 'some-other-secret');
     const attempt = (authorization) => {

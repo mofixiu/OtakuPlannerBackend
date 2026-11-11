@@ -2,8 +2,7 @@ require("dotenv").config();
 const { hash, compare } = require("bcrypt");
 const Admin = require("../../models/Admin");
 const jwt = require("jsonwebtoken");
-const JWT_SECRET =
-  process.env.JWT_SECRET || "don't share this secret with anyone";
+const { jwtSecret } = require("../../config/secrets");
 
 const storeAdmin = async (req, res) => {
   let { username, password } = req.body;
@@ -38,7 +37,7 @@ const profile = async (req, res) => {
     }
 
     const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, jwtSecret());
     
     if (!decoded.admin) {
       return res.status(401).json({
@@ -165,7 +164,7 @@ const apiLogin = async (req, res) => {
     });
   }
   // Generate a token
-  const token = jwt.sign({ admin: admin }, JWT_SECRET, { expiresIn: "1h" });
+  const token = jwt.sign({ admin: admin }, jwtSecret(), { expiresIn: "1h" });
   // Send the token to the client
   res.json({
     status: "success",

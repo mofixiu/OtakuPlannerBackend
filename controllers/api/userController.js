@@ -1,6 +1,7 @@
 const User = require("../../models/User");
 const { hash, compare } = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { jwtSecret } = require("../../config/secrets");
 
 const createTestUser = async (req, res) => {
   try {
@@ -171,7 +172,7 @@ const userLogin = async (req, res) => {
     }
 
     // Generate JWT token
-    const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
+    const JWT_SECRET = jwtSecret();
     const token = jwt.sign(
       {
         userId: user.id,
@@ -179,7 +180,8 @@ const userLogin = async (req, res) => {
         username: user.username,
       },
       JWT_SECRET,
-      { expiresIn: "24h" }
+      // Long enough that phone users aren't logged out every day.
+      { expiresIn: "30d" }
     );
 
     console.log('Login successful for:', email);
@@ -245,7 +247,7 @@ const apiLogin = async (req, res) => {
     });
   }
   // Generate a token
-  const token = jwt.sign({ admin: admin }, JWT_SECRET, { expiresIn: "1h" });
+  const token = jwt.sign({ admin: admin }, jwtSecret(), { expiresIn: "1h" });
   // Send the token to the client
   res.json({
     status: "success",

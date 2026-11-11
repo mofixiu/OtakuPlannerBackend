@@ -4,8 +4,8 @@ require('dotenv').config();
 const { 
     DB_HOST = "localhost", 
     DB_USER = 'root', 
-    DB_PASSWORD = 'david001', 
-    DB_NAME = 'lodgix', 
+    DB_PASSWORD = '', 
+    DB_NAME = 'otaku_planner', 
     DB_PORT = 3306 
 } = process.env;
 

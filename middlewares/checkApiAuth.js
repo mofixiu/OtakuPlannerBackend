@@ -1,5 +1,5 @@
 const {expressjwt: jwt} = require('express-jwt');
-const JWT_SECRET  = process.env?.JWT_SECRET || "don't share this secret with anyone";
+const { jwtSecret } = require('../config/secrets');
 
 const authenticate = (req, res, next) => {
     if (!req.auth?.admin){
@@ -8,4 +8,4 @@ const authenticate = (req, res, next) => {
     next();
 }
 
-module.exports = [jwt({ secret: JWT_SECRET, algorithms: ['HS256'] }), authenticate];
+module.exports = [jwt({ secret: () => jwtSecret(), algorithms: ['HS256'] }), authenticate];

@@ -15,6 +15,10 @@ const { storeUser, getCompletedTasksCount, getUserProfile } = require("../contro
 const { chat: assistantChat } = require('../controllers/api/assistantController');
 const requireUser = require('../middlewares/requireUser');
 const { createAssistantRateLimit } = require('../middlewares/assistantRateLimit');
+const { sameUserParam, sameUserQuery, bodyOwner, ownsRow } = require('../middlewares/ownership');
+
+// Every user route below needs a login, and only reaches the caller's own data.
+const self = [requireUser, sameUserParam('userId')];
 
 router.get("/", (req, res) => {
   res.render("home");
@@ -43,27 +47,27 @@ router.get("/login", (req, res) => {
 router.post("/auth/login", userLogin);
 router.post("/auth/register", storeUser);
 router.get("/api/admin/profile", profile);
-router.get('/users/:userId/profile', getUserProfile);
+router.get('/users/:userId/profile', self, getUserProfile);
 router.post("/login", login);
 
-router.get('/users/:userId/completed-tasks', getCompletedTasksCount);
-router.get('/users/:userId/tasks', getUserTasks);
+router.get('/users/:userId/completed-tasks', self, getCompletedTasksCount);
+router.get('/users/:userId/tasks', self, getUserTasks);
 
-router.post('/tasks', storeTask);
-router.get('/tasks', getTasks);
-router.get('/tasks/:id', getTaskById);
-router.put('/tasks/:id', updateTask);
-router.patch('/tasks/:id', partialTaskUpdate);
-router.delete('/tasks/:id', deleteTask);
+router.post('/tasks', requireUser, bodyOwner, storeTask);
+router.get('/tasks', requireUser, sameUserQuery('user_id'), getTasks);
+router.get('/tasks/:id', requireUser, ownsRow('tasks'), getTaskById);
+router.put('/tasks/:id', requireUser, ownsRow('tasks'), bodyOwner, updateTask);
+router.patch('/tasks/:id', requireUser, ownsRow('tasks'), bodyOwner, partialTaskUpdate);
+router.delete('/tasks/:id', requireUser, ownsRow('tasks'), deleteTask);
 
-router.post('/categories', storeCategory);
-router.get('/users/:userId/categories', getUserCategories);
-router.delete('/categories/:id', deleteCategory);
+router.post('/categories', requireUser, bodyOwner, storeCategory);
+router.get('/users/:userId/categories', self, getUserCategories);
+router.delete('/categories/:id', requireUser, ownsRow('categories'), deleteCategory);
 
-router.post('/recurring-tasks', storeRecurring_task);
-router.get('/users/:userId/recurring-tasks',getUserRecurringTasks);
-router.put('/recurring-tasks/:id', updateRecurring_task);
-router.delete('/recurring-tasks/:id', deleteRecurring_task);
+router.post('/recurring-tasks', requireUser, bodyOwner, storeRecurring_task);
+router.get('/users/:userId/recurring-tasks', self, getUserRecurringTasks);
+router.put('/recurring-tasks/:id', requireUser, ownsRow('recurring_tasks'), bodyOwner, updateRecurring_task);
+router.delete('/recurring-tasks/:id', requireUser, ownsRow('recurring_tasks'), deleteRecurring_task);
 
 // Planning assistant: logged-in users only, and rate-limited to protect the Gemini credits.
 router.post('/assistant/chat', requireUser, createAssistantRateLimit(), assistantChat);

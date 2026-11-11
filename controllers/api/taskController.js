@@ -385,13 +385,9 @@ const getTasks = async (req, res) => {
     try {
         const { user_id } = req.query;
         
-        let tasks;
-        if (user_id) {
-            console.log('Fetching tasks for user ID:', user_id);
-            tasks = await Task.where('user_id', user_id).fetch();
-        } else {
-            tasks = await Task.fetch();
-        }
+        // The route only lets a user list their own tasks (Task.where never existed).
+        console.log('Fetching tasks for user ID:', user_id);
+        const tasks = await Task.findByUserId(user_id);
         
         console.log(`Found ${tasks.length} tasks`);
         

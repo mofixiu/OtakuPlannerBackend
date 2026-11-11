@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const app = express();
@@ -16,8 +17,14 @@ const userRoutes = require('./routes/userRoute');
 // Add CORS support for the API
 app.use(cors());
 
+// Refuse to start without a login secret rather than fall back to a public one.
+if (!process.env.JWT_SECRET) {
+    console.error('JWT_SECRET is not set. Add it to .env (see .env.example).');
+    process.exit(1);
+}
+
 app.use(session({
-    secret: "don't share this secret with anyone",
+    secret: process.env.SESSION_SECRET || process.env.JWT_SECRET,
     resave: false,
     saveUninitialized: true,
 }));
