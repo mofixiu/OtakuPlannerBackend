@@ -40,26 +40,26 @@ router.get("/login", (req, res) => {
 router.post("/auth/login", userLogin);
 router.post("/auth/register", storeUser);
 router.get("/api/admin/profile", profile);
-router.get('/api/users/:userId/profile', getUserProfile);
+router.get('/users/:userId/profile', getUserProfile);
 router.post("/login", login);
 
-router.get('/api/users/:userId/completed-tasks', getCompletedTasksCount);
-router.get('/api/users/:userId/tasks', getUserTasks);
+router.get('/users/:userId/completed-tasks', getCompletedTasksCount);
+router.get('/users/:userId/tasks', getUserTasks);
 
-router.post('/api/tasks', storeTask);
-router.get('/api/tasks', getTasks);
-router.get('/api/tasks/:id', getTaskById);
-router.put('/api/tasks/:id', updateTask);
-router.patch('/api/tasks/:id', partialTaskUpdate);
-router.delete('/api/tasks/:id', deleteTask);
+router.post('/tasks', storeTask);
+router.get('/tasks', getTasks);
+router.get('/tasks/:id', getTaskById);
+router.put('/tasks/:id', updateTask);
+router.patch('/tasks/:id', partialTaskUpdate);
+router.delete('/tasks/:id', deleteTask);
 
-router.post('/api/categories', storeCategory);
-router.get('/api/users/:userId/categories', getUserCategories);
-router.delete('/api/categories/:id', deleteCategory);
+router.post('/categories', storeCategory);
+router.get('/users/:userId/categories', getUserCategories);
+router.delete('/categories/:id', deleteCategory);
 
-router.post('/api/recurring-tasks', storeRecurring_task);
-router.get('/api/users/:userId/recurring-tasks',getUserRecurringTasks);
-router.put('/api/recurring-tasks/:id', updateRecurring_task);
-router.delete('/api/recurring-tasks/:id', deleteRecurring_task);
+router.post('/recurring-tasks', storeRecurring_task);
+router.get('/users/:userId/recurring-tasks',getUserRecurringTasks);
+router.put('/recurring-tasks/:id', updateRecurring_task);
+router.delete('/recurring-tasks/:id', deleteRecurring_task);
 
 module.exports = router;
