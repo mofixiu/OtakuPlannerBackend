@@ -12,6 +12,9 @@ const {
 } = require("../controllers/api/adminController");
 const { apiLogin, userLogin } = require("../controllers/api/userController");
 const { storeUser, getCompletedTasksCount, getUserProfile } = require("../controllers/api/userController");
+const { chat: assistantChat } = require('../controllers/api/assistantController');
+const requireUser = require('../middlewares/requireUser');
+const { createAssistantRateLimit } = require('../middlewares/assistantRateLimit');
 
 router.get("/", (req, res) => {
   res.render("home");
@@ -61,5 +64,8 @@ router.post('/recurring-tasks', storeRecurring_task);
 router.get('/users/:userId/recurring-tasks',getUserRecurringTasks);
 router.put('/recurring-tasks/:id', updateRecurring_task);
 router.delete('/recurring-tasks/:id', deleteRecurring_task);
+
+// Planning assistant: logged-in users only, and rate-limited to protect the Gemini credits.
+router.post('/assistant/chat', requireUser, createAssistantRateLimit(), assistantChat);
 
 module.exports = router;
