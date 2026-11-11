@@ -3,6 +3,13 @@ const Category = require('../../models/Category');
 const storeCategory = async (req, res) => {
     try {
         let { user_id, name } = req.body;
+        name = typeof name === 'string' ? name.trim() : '';
+        if (!name || name.length > 100) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Give the category a name of up to 100 characters'
+            });
+        }
         
         console.log('Creating category:', req.body);
         
@@ -17,7 +24,7 @@ const storeCategory = async (req, res) => {
         
         const category = Category.fill({ 
             user_id, 
-            name: name.trim()
+            name
         });
         
         await category.insert();
@@ -28,6 +35,13 @@ const storeCategory = async (req, res) => {
             data: category
         });
     } catch (error) {
+        // Two requests for the same new name at once: the database keeps one.
+        if (error.code === 'ER_DUP_ENTRY') {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Category already exists for this user'
+            });
+        }
         console.error('Error creating category:', error);
         res.status(500).json({
             status: 'error',
