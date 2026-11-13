@@ -28,7 +28,8 @@ async function loadPlannerContext(userId) {
 
 /**
  * POST /api/assistant/chat
- * Body: { messages: [{ role: 'user' | 'model', text }], today: 'YYYY-MM-DD', now: 'HH:MM' }
+ * Body: { messages: [{ role: 'user' | 'model', text }], today: 'YYYY-MM-DD', now: 'HH:MM',
+ *         persona?: { name, series } }   (Anime mode: answer as that character)
  * Replies: { status, data: { reply, suggested_tasks: [{ title, date, time, category }] } }
  */
 const chat = async (req, res) => {
@@ -48,6 +49,7 @@ const chat = async (req, res) => {
             username: req.user.username,
             today: request.today,
             now: request.now,
+            persona: request.persona,
             ...context,
         });
 

@@ -57,8 +57,25 @@ function taskDay(value) {
     return match ? match[1] : null;
 }
 
+const MAX_PERSONA_LENGTH = 80;
+
 /**
- * Checks the request from the app. Returns { messages, today, now } or
+ * Anime mode sends the character the user picked: { name, series }. Only
+ * letters, numbers and everyday punctuation get through, so a name can't
+ * smuggle instructions into the prompt. Returns null when there's nothing usable.
+ */
+function cleanPersona(raw) {
+    const clean = (value) =>
+        typeof value === 'string'
+            ? value.replace(/\s+/g, ' ').replace(/[^\p{L}\p{N} .,'’:!?&()\-]/gu, '').replace(/ {2,}/g, ' ').trim().slice(0, MAX_PERSONA_LENGTH)
+            : '';
+    const name = clean(raw?.name);
+    if (!name) return null;
+    return { name, series: clean(raw?.series) };
+}
+
+/**
+ * Checks the request from the app. Returns { messages, today, now, persona } or
  * { error } with a message fit to show the user.
  */
 function validateChatRequest(body, serverNow = new Date()) {
@@ -84,7 +101,7 @@ function validateChatRequest(body, serverNow = new Date()) {
     // The phone knows the user's local date and time; the server may not.
     const today = isRealDate(body?.today) ? body.today : serverNow.toISOString().slice(0, 10);
     const now = typeof body?.now === 'string' && TIME_RE.test(body.now) ? body.now : serverNow.toISOString().slice(11, 16);
-    return { messages, today, now };
+    return { messages, today, now, persona: cleanPersona(body?.persona) };
 }
 
 /** Picks the tasks worth telling the model about: overdue, today and the next two weeks. */
@@ -109,7 +126,7 @@ function describeRecurring(task) {
     return `- ${task.title} [${task.category || 'Uncategorised'}], ${task.frequency || 'repeating'} at ${task.time || 'no set time'}, from ${taskDay(task.date) || 'unknown date'}`;
 }
 
-function buildSystemPrompt({ username, today, now, tasks = [], recurring = [], categories = [] }) {
+function buildSystemPrompt({ username, today, now, tasks = [], recurring = [], categories = [], persona = null }) {
     const upcoming = selectTasks(tasks, today);
     const taskLines = upcoming.length
         ? upcoming.map((task) => describeTask(task, today)).join('\n')
@@ -133,11 +150,22 @@ Their categories: ${categoryList}
 How to answer:
 - Use their real tasks when they ask about their schedule. Never invent tasks they don't have.
 - Keep "reply" short: a few sentences, or a short list with "- " bullets. Plain text only: no markdown, bold, headings or tables.
-- A little anime flavour is fine; don't overdo it.
-- When they ask you to add, schedule or plan something, put each concrete task in "suggested_tasks" with a date (YYYY-MM-DD), a 24-hour time (HH:MM) and one of their categories (use Personal if none fits). The app shows these as cards they tap to add, so say "Tap Add on the ones you want". Never claim you've added anything yourself.
+${persona ? '' : "- A little anime flavour is fine; don't overdo it.\n"}- When they ask you to add, schedule or plan something, put each concrete task in "suggested_tasks" with a date (YYYY-MM-DD), a 24-hour time (HH:MM) and one of their categories (use Personal if none fits). The app shows these as cards they tap to add, so say "Tap Add on the ones you want". Never claim you've added anything yourself.
 - Never suggest a task earlier than ${today} ${now}. Suggest at most ${MAX_SUGGESTIONS}.
 - Otherwise leave "suggested_tasks" empty.
-- If the question has nothing to do with planning, answer briefly and kindly.`;
+- If the question has nothing to do with planning, answer briefly and kindly.${persona ? voiceSection(persona) : ''}`;
+}
+
+/** How to sound in Anime mode. The name and show are quoted as data. */
+function voiceSection({ name, series }) {
+    const who = series ? `${JSON.stringify(name)} from ${JSON.stringify(series)}` : JSON.stringify(name);
+    return `
+
+Voice:
+- The user picked the character ${who}. Answer as them, and make it unmistakable from the first sentence: their personality, attitude, confidence or bluntness and way of talking, the way a fan would recognise it. Speak as yourself to the user ("I"), but never introduce yourself or say your own name: just sound like them.
+- Being in character never changes the facts: their tasks, dates, times and suggestions must be exactly what they'd be without the voice.
+- Keep it light and short. No long quotes from the show and no spoilers.
+- If they ask for plain answers or seem stressed, drop the act and help plainly.`;
 }
 
 function toGeminiContents(messages) {
@@ -196,6 +224,7 @@ module.exports = {
     MAX_TURNS,
     MAX_TEXT_LENGTH,
     validateChatRequest,
+    cleanPersona,
     selectTasks,
     buildSystemPrompt,
     toGeminiContents,
